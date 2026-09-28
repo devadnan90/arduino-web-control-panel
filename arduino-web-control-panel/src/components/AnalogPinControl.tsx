@@ -6,6 +6,7 @@ interface AnalogPinControlProps {
   type: 'PWM' | 'ANALOG';
   onWrite?: (pin: number, value: number) => void;
   onRead?: (pin: number) => void;
+  readValue?: number;
   disabled: boolean;
 }
 
@@ -14,15 +15,14 @@ export default function AnalogPinControl({
   type,
   onWrite,
   onRead,
+  readValue,
   disabled
 }: AnalogPinControlProps) {
-  const [value, setValue] = useState(0);
+  const [pwmValue, setPwmValue] = useState(0);
+  const value = type === 'ANALOG' ? Number(readValue ?? 0) : pwmValue;
 
-  const handleValueChange = (newValue: number) => {
-    setValue(newValue);
-    if (onWrite) {
-      onWrite(pin, newValue);
-    }
+  const commit = () => {
+    if (onWrite) onWrite(pin, pwmValue);
   };
 
   const percentage = type === 'PWM' ? Math.round((value / 255) * 100) : value;
@@ -69,7 +69,9 @@ export default function AnalogPinControl({
             min="0"
             max="255"
             value={value}
-            onChange={(e) => handleValueChange(Number(e.target.value))}
+            onChange={(e) => setPwmValue(Number(e.target.value))}
+            onPointerUp={commit}
+            onKeyUp={commit}
             disabled={disabled}
             className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer disabled:cursor-not-allowed accent-blue-600"
           />

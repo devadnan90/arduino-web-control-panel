@@ -5,6 +5,7 @@ interface DigitalPinControlProps {
   pin: number;
   onWrite: (pin: number, value: 'HIGH' | 'LOW') => void;
   onRead: (pin: number) => void;
+  readValue?: string;
   disabled: boolean;
 }
 
@@ -12,6 +13,7 @@ export default function DigitalPinControl({
   pin,
   onWrite,
   onRead,
+  readValue,
   disabled
 }: DigitalPinControlProps) {
   const [state, setState] = useState<'HIGH' | 'LOW'>('LOW');
@@ -49,6 +51,9 @@ export default function DigitalPinControl({
         }`}>
           {state}
         </span>
+        {readValue !== undefined && (
+          <span className="text-xs font-medium text-blue-700">Read: {readValue}</span>
+        )}
       </div>
 
       <div className="flex gap-2">

@@ -1,6 +1,7 @@
 export interface ArduinoData {
   timestamp: number;
   type: string;
+  pin?: string;
   value: number | string;
 }
 
@@ -9,6 +10,8 @@ export class ArduinoService {
   private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   private writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
   private connected: boolean = false;
+  private readClosed: Promise<void> | null = null;
+  private writeClosed: Promise<void> | null = null;
   private onDataCallback: ((data: ArduinoData) => void) | null = null;
   private onConnectionChangeCallback: ((connected: boolean) => void) | null = null;
 
@@ -41,11 +44,11 @@ export class ArduinoService {
       this.onConnectionChangeCallback?.(true);
 
       const textDecoder = new TextDecoderStream();
-      this.port.readable.pipeTo(textDecoder.writable);
+      this.readClosed = this.port.readable.pipeTo(textDecoder.writable).catch(() => {});
       this.reader = textDecoder.readable.getReader();
 
       const textEncoder = new TextEncoderStream();
-      textEncoder.readable.pipeTo(this.port.writable);
+      this.writeClosed = textEncoder.readable.pipeTo(this.port.writable).catch(() => {});
       this.writer = textEncoder.writable.getWriter();
 
       this.startReading();
@@ -57,15 +60,7 @@ export class ArduinoService {
   }
 
   async disconnect(): Promise<void> {
-    if (this.reader) {
-      await this.reader.cancel();
-      this.reader = null;
-    }
-
-    if (this.writer) {
-      await this.writer.close();
-      this.writer = null;
-    }
+    await this.pauseStreams();
 
     if (this.port) {
       await this.port.close();
@@ -160,12 +155,15 @@ export class ArduinoService {
 
   async pauseStreams(): Promise<void> {
     if (this.reader) {
-      await this.reader.cancel();
+      await this.reader.cancel().catch(() => {});
+      this.reader.releaseLock();
       this.reader = null;
+      await this.readClosed;
     }
     if (this.writer) {
-      await this.writer.close();
+      await this.writer.close().catch(() => {});
       this.writer = null;
+      await this.writeClosed;
     }
   }
 
@@ -173,11 +171,11 @@ export class ArduinoService {
     if (!this.port || !this.connected) return;
 
     const textDecoder = new TextDecoderStream();
-    this.port.readable.pipeTo(textDecoder.writable);
+    this.readClosed = this.port.readable.pipeTo(textDecoder.writable).catch(() => {});
     this.reader = textDecoder.readable.getReader();
 
     const textEncoder = new TextEncoderStream();
-    textEncoder.readable.pipeTo(this.port.writable);
+    this.writeClosed = textEncoder.readable.pipeTo(this.port.writable).catch(() => {});
     this.writer = textEncoder.writable.getWriter();
 
     this.startReading();
@@ -216,7 +214,8 @@ export class ArduinoService {
         const data: ArduinoData = {
           timestamp: Date.now(),
           type: parts[0],
-          value: isNaN(Number(parts[1])) ? parts[1] : Number(parts[1]),
+          pin: parts.length >= 3 ? parts[1] : undefined,
+          value: (() => { const v = parts[parts.length - 1]; return isNaN(Number(v)) ? v : Number(v); })(),
         };
         this.onDataCallback?.(data);
       }

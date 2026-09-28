@@ -223,18 +223,18 @@ export default function MotorControlPanel({ isConnected, onSendCommand, motorDat
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <MotorControlCard
-          motor="A"
-          config={motorA}
-          onControl={(action) => handleMotorControl('A', action)}
-          onSpeedChange={(speed) => handleSpeedChange('A', speed)}
-        />
-        <MotorControlCard
-          motor="B"
-          config={motorB}
-          onControl={(action) => handleMotorControl('B', action)}
-          onSpeedChange={(speed) => handleSpeedChange('B', speed)}
-        />
+        {MotorControlCard({
+          motor: 'A',
+          config: motorA,
+          onControl: (action) => handleMotorControl('A', action),
+          onSpeedChange: (speed) => handleSpeedChange('A', speed)
+        })}
+        {MotorControlCard({
+          motor: 'B',
+          config: motorB,
+          onControl: (action) => handleMotorControl('B', action),
+          onSpeedChange: (speed) => handleSpeedChange('B', speed)
+        })}
       </div>
 
       {!isConnected && (

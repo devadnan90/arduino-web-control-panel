@@ -100,6 +100,7 @@ void processCommand(String command) {
     }
   }
   else if (cmd == "DIGITAL_WRITE") {
+    pinMode(pin, OUTPUT);
     int value = (valueStr == "HIGH") ? HIGH : LOW;
     digitalWrite(pin, value);
     Serial.print("DIGITAL_WRITE:");

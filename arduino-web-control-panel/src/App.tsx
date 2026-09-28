@@ -32,6 +32,14 @@ function App() {
     });
   }, []);
 
+  const latest = (type: string, pin: number) => {
+    for (let i = dataLog.length - 1; i >= 0; i--) {
+      const d = dataLog[i];
+      if (d.type === type && d.pin === String(pin)) return d.value;
+    }
+    return undefined;
+  };
+
   const handleConnect = async () => {
     try {
       await arduinoService.connect();
@@ -212,6 +220,7 @@ function App() {
                       pin={pin}
                       onWrite={handleDigitalWrite}
                       onRead={handleDigitalRead}
+                      readValue={latest('DIGITAL_READ', pin) as string | undefined}
                       disabled={!isConnected}
                     />
                   ))}
@@ -244,6 +253,7 @@ function App() {
                       pin={pin}
                       type="ANALOG"
                       onRead={handleAnalogRead}
+                      readValue={latest('ANALOG_READ', pin) as number | undefined}
                       disabled={!isConnected}
                     />
                   ))}

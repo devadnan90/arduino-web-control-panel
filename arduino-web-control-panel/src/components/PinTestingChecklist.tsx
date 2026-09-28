@@ -65,7 +65,7 @@ export default function PinTestingChecklist({ isConnected }: PinTestingChecklist
   };
 
   const updateTestStatus = (id: string, tested: boolean, passed: boolean) => {
-    setTests(tests.map(t => t.id === id ? { ...t, tested, passed } : t));
+    setTests(prev => prev.map(t => t.id === id ? { ...t, tested, passed } : t));
   };
 
   const toggleManualTest = (id: string, passed: boolean) => {
